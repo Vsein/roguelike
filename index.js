@@ -321,8 +321,16 @@ class Game {
   #generateItem(type) {
     // function to generate some items
     // all to add some spice to the game
-    var generated = false;
-    while (!generated) {
+    var generated = 0;
+    var neededAmount = 1;
+    if (type === 'HP') {
+      if (this.player.damage > 100) {
+        neededAmount += 2;
+      } else if (this.player.damage > 50) {
+        neededAmount += 1;
+      }
+    }
+    while (generated < neededAmount) {
       var x = randomIntFromInterval(0, this.width - 1);
       var y = randomIntFromInterval(0, this.height - 1);
       if (this.field[y][x] !== '') {
@@ -331,7 +339,7 @@ class Game {
       this.field[y][x] = type;
       var tile = $(".tile").eq(y * this.width + x);
       tile.addClass('tile' + type);
-      generated = true;
+      generated++;
     }
   }
 

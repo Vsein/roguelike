@@ -18,6 +18,9 @@ class Game {
     this.#generateField();
     this.#initPlayerMovements();
     this.#initEnemyMovements();
+    this.#generatePotionsRandomly();
+    this.#generateEnemiesRandomly();
+    this.#generateSwordsRandomly();
   }
 
   #generateField() {
@@ -195,11 +198,13 @@ class Game {
     var self = this;
 
     function handleKeypress(event) {
+      // check if the key is not WASD, or if the hero has died
       var key = event.key.toLowerCase();
       if (self.player.status === 'dead' || "wasd ".indexOf(key) == -1) {
         return;
       }
 
+      // if the player attacked, engage in combat, otherwise try to evade
       if (key === ' ') {
         self.#handleAttack(self.player.x, self.player.y, 'player');
       } else {
@@ -312,6 +317,88 @@ class Game {
         self.enemiesSkipNextTurn = false;
         self.playerEvaded = false;
       }
-    }, 1 * 800)
+    }, 1 * 800);
+  }
+
+  #generateItem(type) {
+    // function to generate some items
+    // all to add some spice to the game
+    var generated = false;
+    while (!generated) {
+      var x = randomIntFromInterval(0, this.width - 1);
+      var y = randomIntFromInterval(0, this.height - 1);
+      if (this.field[y][x] !== '') {
+        continue;
+      }
+      this.field[y][x] = type;
+      var tile = $(".tile").eq(y * this.width + x);
+      tile.addClass('tile' + type);
+      generated = true;
+    }
+  }
+
+  #generatePotionsRandomly() {
+    // generate 1 potion randomly every 10 seconds
+    setInterval(this.#generateItem.bind(this, 'HP'), 10 * 1000);
+  }
+
+  #generateSwordsRandomly() {
+    // generate 1 sword randomly every 30 seconds
+    setInterval(this.#generateItem.bind(this, 'SW'), 30 * 1000);
+  }
+
+  #reviveEnemy() {
+    // revive 1 enemy in a random place
+    var enemyGenerated = false;
+    var enemyIndex = -1;
+    for (var i = 0; i < 10; i++) {
+      if (this.enemies[i].status === 'dead') {
+        enemyIndex = i;
+        this.enemies[i].status = 'alive';
+        this.enemies[i].health = 100;
+        break;
+      }
+    }
+    if (enemyIndex === -1) {
+      enemyGenerated = true;
+    }
+    while (!enemyGenerated) {
+      var x = randomIntFromInterval(0, this.width - 1);
+      var y = randomIntFromInterval(0, this.height - 1);
+      if (this.field[y][x] !== '') {
+        continue;
+      }
+      this.field[y][x] = 'E';
+      this.enemies[enemyIndex].x = x;
+      this.enemies[enemyIndex].y = y;
+      var tile = $(".tile").eq(y * this.width + x);
+      tile.addClass('tileE');
+      tile.addClass(enemyIndex.toString());
+      enemyGenerated = true;
+    }
+  }
+
+  #generateEnemiesRandomly() {
+    // generate 1 enemy randomly every 10 seconds, if the amount of enemies < 10
+    var self = this;
+    setInterval(function() {
+      var reviveCnt = 0;
+      var deadCnt = 0;
+      for (var i = 0; i < 10; i++) {
+        if (self.enemies[i].status === 'dead') {
+          deadCnt++;
+        }
+      }
+      if (deadCnt === 10) {
+        reviveCnt = 3;
+      } else if (deadCnt >= 5) {
+        reviveCnt = 2;
+      } else {
+        reviveCnt = 1;
+      }
+      while (reviveCnt--) {
+        self.#reviveEnemy();
+      }
+    }, 10 * 1000);
   }
 }

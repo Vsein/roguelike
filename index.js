@@ -50,7 +50,34 @@ class Game {
         field[j][x] = '';
       }
     }
-    console.log(createdRooms.length);
+
+    // generation of the player, objects and enemies
+    var swordsCnt = 0;
+    var potionsCnt = 0;
+    var heroCnt = 0;
+    var enemiesCnt = 0;
+    while (swordsCnt < 2 || potionsCnt < 10 || heroCnt < 1 || enemiesCnt < 10) {
+      var x = randomIntFromInterval(0, this.width - 1);
+      var y = randomIntFromInterval(0, this.height - 1);
+      if (field[y][x] !== '') {
+        continue;
+      }
+      var curType = '';
+      if (swordsCnt < 2) {
+        curType = 'SW';
+        swordsCnt++;
+      } else if (potionsCnt < 10) {
+        curType = 'HP';
+        potionsCnt++;
+      } else if (heroCnt < 1) {
+        curType = 'P';
+        heroCnt++;
+      } else if (enemiesCnt < 10) {
+        curType = 'E';
+        enemiesCnt++;
+      }
+      field[y][x] = curType;
+    }
 
     var DOMField = $('.field');
     DOMField.empty();

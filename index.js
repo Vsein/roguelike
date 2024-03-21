@@ -87,6 +87,12 @@ class Game {
         var tile = document.createElement('div');
         tile.classList.add('tile');
         tile.classList.add('tile' + this.field[i][j]);
+        if (this.field[i][j] === 'P' || this.field[i][j] === 'E') {
+          var healthbar = document.createElement('div');
+          healthbar.classList.add('health');
+          healthbar.style.width = '100%';
+          tile.append(healthbar);
+        }
         DOMField.append(tile);
       }
     }

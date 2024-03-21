@@ -20,6 +20,7 @@ class Game {
   }
 
   #generateField() {
+    // creating a 2d array with walls ('W')
     this.field = [];
     for (var i = 0; i < this.height; i++) {
       var row = [];
@@ -93,6 +94,7 @@ class Game {
       this.field[y][x] = curType;
     }
 
+    // generate the dom field
     var DOMField = $('.field');
     DOMField.empty();
     for (var i = 0; i < this.height; i++) {
@@ -128,24 +130,27 @@ class Game {
     return newCoordinate;
   }
 
+  #updatePlayerHP() {
+    if (this.player.health <= 0) {
+      this.player.status = 'dead';
+    }
+    var playerTile = $('.tileP');
+    playerTile.children('.health').css('width', this.player.health + '%');
+  }
+
   #updateEnemyHP(index) {
     this.enemies[index].health -= this.player.damage;
+    var enemyTile = $(".tileE." + index);
+    enemyTile.children('.health').css('width', this.enemies[index].health + '%');
+
     if (this.enemies[index].health <= 0) {
       this.enemies[index].status = 'dead';
       this.#handleItemsBeneathEnemy(this.enemies[index].x, this.enemies[index].y);
-    }
-
-    var enemyTile = $(".tileE." + index);
-    enemyTile.children('.health').css('width', this.enemies[index].health + '%');
-    if (this.enemies[index].health <= 0) {
       enemyTile.removeClass('tileE');
       enemyTile.removeClass(index.toString());
       enemyTile.empty();
     } else {
-      this.player.health -= this.enemyDamage;
-      if (this.player.health <= 0) {
-        this.player.status = 'dead';
-      }
+      this.#updatePlayerHP();
     }
   }
 
@@ -164,24 +169,39 @@ class Game {
     return { x: diffX, y: diffY };
   }
 
-  #initPlayerMovements() {
-    var self = this;
-    function handleAttack() {
-      for (var i = -1; i <= 1; i++) {
-        for (var j = -1; j <= 1; j++) {
-          if (i === 0 && j === 0) {
-            continue;
-          }
-          var attackX = self.#adjustCoordinate(self.player.x + j, 'x');
-          var attackY = self.#adjustCoordinate(self.player.y + i, 'y');
-          var tileToAttack = self.field[attackY][attackX];
-          if (tileToAttack[0] === 'E') {
-            var ind = tileToAttack[1];
-            self.#updateEnemyHP(ind);
-          }
+  #handleAttack(initiator, enemyIndex = 0) {
+    var x;
+    var y;
+    if (initiator === 'player') {
+      x = this.player.x;
+      y = this.player.y;
+    } else {
+      x = this.enemies[enemyIndex].x;
+      y = this.enemies[enemyIndex].y;
+    }
+
+    for (var i = -1; i <= 1; i++) {
+      for (var j = -1; j <= 1; j++) {
+        if (i === 0 && j === 0) {
+          continue;
+        }
+        var attackX = this.#adjustCoordinate(x + j, 'x');
+        var attackY = this.#adjustCoordinate(y + i, 'y');
+        var tileToAttack = this.field[attackY][attackX];
+        if (initiator === 'player' && tileToAttack[0] === 'E') {
+          var ind = tileToAttack[1];
+          this.#updateEnemyHP(ind);
+        }
+        if (initiator === 'enemy' && tileToAttack === 'P') {
+          this.player.health -= this.enemyDamage;
+          this.#updatePlayerHP();
         }
       }
     }
+  }
+
+  #initPlayerMovements() {
+    var self = this;
 
     function handleKeypress(event) {
       var key = event.key.toLowerCase();
@@ -190,7 +210,7 @@ class Game {
       }
 
       if (key === ' ') {
-        handleAttack();
+        self.#handleAttack('player');
       }
 
       // registering where the player has moved
@@ -248,6 +268,9 @@ class Game {
   #handleEnemyMovements() {
     for (var i = 0; i < this.enemies.length; i++) {
       if (this.enemies[i].status === 'dead') continue;
+
+      this.#handleAttack('enemy', i);
+
       if (this.enemies[i].movementType <= 1) {
         // registering the enemy movement in a random direction
         var direction = randomIntFromInterval(0, 4);
@@ -287,6 +310,7 @@ class Game {
   #initEnemyMovements() {
     var self = this;
     setInterval(function() {
+      // if there was some enemy movements recently, skip the enemies' turn
       if (!self.enemiesSkipNextTurn) {
         self.#handleEnemyMovements();
       } else {

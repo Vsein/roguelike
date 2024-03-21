@@ -8,6 +8,7 @@ class Game {
     this.width = 32;
     this.field = [];
     this.player = { x: undefined, y: undefined, health: 100, damage: 20, status: 'alive' }
+    this.playerEvaded = false;
     this.enemies = [];
     this.enemyDamage = 15;
     this.enemiesSkipNextTurn = undefined;
@@ -169,17 +170,7 @@ class Game {
     return { x: diffX, y: diffY };
   }
 
-  #handleAttack(initiator, enemyIndex = 0) {
-    var x;
-    var y;
-    if (initiator === 'player') {
-      x = this.player.x;
-      y = this.player.y;
-    } else {
-      x = this.enemies[enemyIndex].x;
-      y = this.enemies[enemyIndex].y;
-    }
-
+  #handleAttack(x, y, initiator) {
     for (var i = -1; i <= 1; i++) {
       for (var j = -1; j <= 1; j++) {
         if (i === 0 && j === 0) {
@@ -210,7 +201,9 @@ class Game {
       }
 
       if (key === ' ') {
-        self.#handleAttack('player');
+        self.#handleAttack(self.player.x, self.player.y, 'player');
+      } else {
+        self.playerEvaded = Math.random() > 0.3 ? true : false;
       }
 
       // registering where the player has moved
@@ -249,8 +242,8 @@ class Game {
       healthbar.style.width = self.player.health + '%';
       newTile.append(healthbar);
 
-      self.#handleEnemyMovements();
       self.enemiesSkipNextTurn = true;
+      self.#handleEnemyMovements();
     }
 
     window.addEventListener("keypress", handleKeypress);
@@ -269,7 +262,9 @@ class Game {
     for (var i = 0; i < this.enemies.length; i++) {
       if (this.enemies[i].status === 'dead') continue;
 
-      this.#handleAttack('enemy', i);
+      if (!this.playerEvaded) {
+        this.#handleAttack(this.enemies[i].x, this.enemies[i].y, 'enemy');
+      }
 
       if (this.enemies[i].movementType <= 1) {
         // registering the enemy movement in a random direction
@@ -315,6 +310,7 @@ class Game {
         self.#handleEnemyMovements();
       } else {
         self.enemiesSkipNextTurn = false;
+        self.playerEvaded = false;
       }
     }, 1 * 800)
   }

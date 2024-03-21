@@ -129,6 +129,12 @@ class Game {
   }
 
   #updateEnemyHP(index) {
+    this.enemies[index].health -= this.player.damage;
+    if (this.enemies[index].health <= 0) {
+      this.enemies[index].status = 'dead';
+      this.#handleItemsBeneathEnemy(this.enemies[index].x, this.enemies[index].y);
+    }
+
     var enemyTile = $(".tileE." + index);
     enemyTile.children('.health').css('width', this.enemies[index].health + '%');
     if (this.enemies[index].health <= 0) {
@@ -171,11 +177,6 @@ class Game {
           var tileToAttack = self.field[attackY][attackX];
           if (tileToAttack[0] === 'E') {
             var ind = tileToAttack[1];
-            self.enemies[ind].health -= self.player.damage;
-            if (self.enemies[ind].health <= 0) {
-              self.enemies[ind].status = 'dead';
-              self.field[attackY][attackX] = '';
-            }
             self.#updateEnemyHP(ind);
           }
         }
@@ -235,6 +236,15 @@ class Game {
     window.addEventListener("keypress", handleKeypress);
   }
 
+  #handleItemsBeneathEnemy(x, y) {
+    var everything = this.field[y][x].split(' ');
+    if (everything.length > 1) {
+      this.field[y][x] = everything[1];
+    } else {
+      this.field[y][x] = '';
+    }
+  }
+
   #handleEnemyMovements() {
     for (var i = 0; i < this.enemies.length; i++) {
       if (this.enemies[i].status === 'dead') continue;
@@ -256,12 +266,7 @@ class Game {
         previousTile.removeClass('tileE');
         previousTile.removeClass(i.toString());
         previousTile.empty();
-        var everything = this.field[this.enemies[i].y][this.enemies[i].x].split(' ');
-        if (everything.length > 1) {
-          this.field[this.enemies[i].y][this.enemies[i].x] = everything[1];
-        } else {
-          this.field[this.enemies[i].y][this.enemies[i].x] = '';
-        }
+        this.#handleItemsBeneathEnemy(this.enemies[i].x, this.enemies[i].y);
 
         // setting new coordinates
         this.enemies[i].x = newX;

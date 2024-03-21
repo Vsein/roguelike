@@ -390,11 +390,18 @@ class Game {
         }
       }
       if (deadCnt === 10) {
+        reviveCnt = 4;
+      } else if (deadCnt >= 7) {
         reviveCnt = 3;
-      } else if (deadCnt >= 5) {
+      } else if (deadCnt >= 4) {
         reviveCnt = 2;
       } else {
         reviveCnt = 1;
+      }
+      if (self.player.damage > 100) {
+        reviveCnt += 5;
+      } else if (self.player.damage > 50) {
+        reviveCnt += 2;
       }
       while (reviveCnt--) {
         self.#reviveEnemy();

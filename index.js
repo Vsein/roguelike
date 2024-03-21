@@ -23,6 +23,13 @@ class Game {
     this.#generateSwordsRandomly();
   }
 
+  #addHealthbarToTile(tile, health) {
+    var healthbar = document.createElement('div');
+    healthbar.classList.add('health');
+    healthbar.style.width = health + '%';
+    tile.append(healthbar);
+  }
+
   #generateField() {
     // creating a 2d array with walls ('W')
     this.field = [];
@@ -112,10 +119,7 @@ class Game {
           tile.classList.add('tile' + this.field[i][j]);
         }
         if (this.field[i][j] === 'P' || this.field[i][j][0] === 'E') {
-          var healthbar = document.createElement('div');
-          healthbar.classList.add('health');
-          healthbar.style.width = '100%';
-          tile.append(healthbar);
+          this.#addHealthbarToTile(tile, 100);
         }
         DOMField.append(tile);
       }
@@ -242,10 +246,7 @@ class Game {
       newTile.addClass('tile');
       newTile.addClass('tileP');
 
-      var healthbar = document.createElement('div');
-      healthbar.classList.add('health');
-      healthbar.style.width = self.player.health + '%';
-      newTile.append(healthbar);
+      self.#addHealthbarToTile(newTile, self.player.health);
 
       self.enemiesSkipNextTurn = true;
       self.#handleEnemyMovements();
@@ -299,10 +300,7 @@ class Game {
         newTile.addClass(i.toString());
         this.field[newY][newX] = 'E' + i + ' ' + this.field[newY][newX];
 
-        var healthbar = document.createElement('div');
-        healthbar.classList.add('health');
-        healthbar.style.width = this.enemies[i].health + '%';
-        newTile.append(healthbar);
+        this.#addHealthbarToTile(newTile, this.enemies[i].health);
       }
     }
   }
@@ -374,6 +372,7 @@ class Game {
       var tile = $(".tile").eq(y * this.width + x);
       tile.addClass('tileE');
       tile.addClass(enemyIndex.toString());
+      this.#addHealthbarToTile(tile, 100);
       enemyGenerated = true;
     }
   }

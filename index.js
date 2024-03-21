@@ -270,6 +270,8 @@ class Game {
 
       if (!this.playerEvaded) {
         this.#handleAttack(this.enemies[i].x, this.enemies[i].y, 'enemy');
+      } else {
+        this.playerEvaded = false;
       }
 
       // registering the enemy movement

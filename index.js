@@ -129,6 +129,9 @@ class Game {
       enemyTile.addClass('tile');
     } else {
       this.player.health -= this.enemyDamage;
+      if (this.player.health <= 0) {
+        this.player.status = 'dead';
+      }
     }
   }
 
@@ -159,6 +162,10 @@ class Game {
 
     function handleKeypress(event) {
       var key = event.key.toLowerCase();
+      if (self.player.status === 'dead') {
+        return;
+      }
+
       if ("wasd ".indexOf(key) == -1) {
         return;
       }
@@ -191,6 +198,9 @@ class Game {
       }
       if (newTileType === 'SW') {
         self.player.damage *= 1.3;
+      }
+      if (newTileType === 'HP') {
+        self.player.health = Math.min(100, self.player.health + 50);
       }
       self.field[newY][newX] = '';
 

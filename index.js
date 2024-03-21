@@ -187,6 +187,11 @@ class Game {
       if (newTileType === 'W' || newTileType[0] === 'E') {
         return;
       }
+      if (newTileType === 'SW') {
+        self.player.damage *= 1.3;
+      }
+      self.field[newY][newX] = '';
+
       var previousTile = $(".tile").eq(self.player.y * self.width + self.player.x);
       previousTile.removeClass();
       previousTile.empty();

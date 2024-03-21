@@ -130,7 +130,6 @@ class Game {
 
   #updateEnemyHP(index) {
     var enemyTile = $(".tileE." + index);
-    console.log(enemyTile);
     enemyTile.children('.health').css('width', this.enemies[index].health + '%');
     if (this.enemies[index].health <= 0) {
       enemyTile.removeClass('tileE');
@@ -172,13 +171,11 @@ class Game {
           var tileToAttack = self.field[attackY][attackX];
           if (tileToAttack[0] === 'E') {
             var ind = tileToAttack[1];
-            console.log(self.enemies[ind]);
             self.enemies[ind].health -= self.player.damage;
             if (self.enemies[ind].health <= 0) {
               self.enemies[ind].status = 'dead';
               self.field[attackY][attackX] = '';
             }
-            console.log(ind);
             self.#updateEnemyHP(ind);
           }
         }
@@ -211,12 +208,12 @@ class Game {
       if (newTileType === 'HP') {
         self.player.health = Math.min(100, self.player.health + 50);
       }
+      self.field[self.player.y][self.player.x] = '';
       self.field[newY][newX] = 'P';
 
       var previousTile = $(".tile").eq(self.player.y * self.width + self.player.x);
       previousTile.removeClass('tileP');
       previousTile.empty();
-      self.field[self.player.y][self.player.x] = '';
 
       // setting new coordinates
       self.player.x = newX;

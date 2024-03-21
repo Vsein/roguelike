@@ -7,16 +7,17 @@ class Game {
     this.health = 100;
     this.height = 20;
     this.width = 32;
+    this.field = [];
   }
 
-  init() {
-    var field = [];
+  #generateField() {
+    this.field = [];
     for (var i = 0; i < this.height; i++) {
       var row = [];
       for (var j = 0; j < this.width; j++) {
         row.push('W');
       }
-      field.push(row);
+      this.field.push(row);
     }
 
     // random generation of rooms
@@ -30,7 +31,7 @@ class Game {
       createdRooms.push({height, width, x, y});
       for (var i = y; i < Math.min(this.height, y + height); i++) {
         for (var j = x; j < Math.min(this.width, x + width); j++) {
-          field[i][j] = '';
+          this.field[i][j] = '';
         }
       }
     }
@@ -39,7 +40,7 @@ class Game {
     for (var i = 0; i < createdRooms.length / 2; i++) {
       var y = Math.min(createdRooms[i].y + Math.floor(createdRooms[i].height / 2), this.height - 2);
       for (var j = 0; j < this.width; j++) {
-        field[y][j] = '';
+        this.field[y][j] = '';
       }
     }
 
@@ -47,7 +48,7 @@ class Game {
     for (var i = Math.ceil(createdRooms.length / 2); i < createdRooms.length; i++) {
       var x = Math.min(createdRooms[i].x + Math.floor(createdRooms[i].width / 2), this.width - 2);
       for (var j = 0; j < this.height; j++) {
-        field[j][x] = '';
+        this.field[j][x] = '';
       }
     }
 
@@ -59,7 +60,7 @@ class Game {
     while (swordsCnt < 2 || potionsCnt < 10 || heroCnt < 1 || enemiesCnt < 10) {
       var x = randomIntFromInterval(0, this.width - 1);
       var y = randomIntFromInterval(0, this.height - 1);
-      if (field[y][x] !== '') {
+      if (this.field[y][x] !== '') {
         continue;
       }
       var curType = '';
@@ -76,7 +77,7 @@ class Game {
         curType = 'E';
         enemiesCnt++;
       }
-      field[y][x] = curType;
+      this.field[y][x] = curType;
     }
 
     var DOMField = $('.field');
@@ -85,9 +86,13 @@ class Game {
       for (var j = 0; j < this.width; j++) {
         var tile = document.createElement('div');
         tile.classList.add('tile');
-        tile.classList.add('tile' + field[i][j]);
+        tile.classList.add('tile' + this.field[i][j]);
         DOMField.append(tile);
       }
     }
+  }
+
+  init() {
+    this.#generateField();
   }
 }

@@ -8,6 +8,8 @@ class Game {
     this.height = 20;
     this.width = 32;
     this.field = [];
+    this.playerX;
+    this.playerY;
   }
 
   #generateField() {
@@ -73,6 +75,8 @@ class Game {
       } else if (heroCnt < 1) {
         curType = 'P';
         heroCnt++;
+        this.playerX = x;
+        this.playerY = y;
       } else if (enemiesCnt < 10) {
         curType = 'E';
         enemiesCnt++;
@@ -98,7 +102,72 @@ class Game {
     }
   }
 
+  #initPlayerMovements() {
+    var self = this;
+    function handleKeypress(event) {
+      var key = event.key.toLowerCase();
+      if ("wasd".indexOf(key) == -1) {
+        return;
+      }
+
+      // registering where the player has moved
+      var diffX = 0;
+      var diffY = 0;
+      if (key === 'w') {
+        diffY = -1;
+      } else if (key === 'a') {
+        diffX = -1;
+      } else if (key === 's') {
+        diffY = 1;
+      } else if (key === 'd') {
+        diffX = 1;
+      }
+
+      // setting new coordinates
+      var newX = self.playerX + diffX;
+      var newY = self.playerY + diffY;
+      if (self.playerX + diffX === self.width) {
+        newX = 0;
+      }
+      if (self.playerX + diffX === -1) {
+        newX = self.width - 1;
+      }
+      if (self.playerY + diffY === self.height) {
+        newY = 0;
+      }
+      if (self.playerY + diffY === -1) {
+        newY = self.height - 1;
+      }
+
+      // handling the movement itself
+      var newTileType = self.field[newY][newX];
+      console.log(newTileType);
+      if (newTileType === 'W' || newTileType === 'E') {
+        return;
+      }
+      var previousTile = $(".tile").eq(self.playerY * self.width + self.playerX);
+      previousTile.removeClass();
+      previousTile.empty();
+      previousTile.addClass('tile');
+
+      self.playerX = newX;
+      self.playerY = newY;
+      var newTile = $(".tile").eq(newY * self.width + newX);
+      newTile.removeClass();
+      newTile.addClass('tile');
+      newTile.addClass('tileP');
+
+      var healthbar = document.createElement('div');
+      healthbar.classList.add('health');
+      healthbar.style.width = '100%';
+      newTile.append(healthbar);
+    }
+
+    window.addEventListener("keypress", handleKeypress);
+  }
+
   init() {
     this.#generateField();
+    this.#initPlayerMovements();
   }
 }

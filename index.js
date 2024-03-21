@@ -4,12 +4,12 @@ function randomIntFromInterval(min, max) { // min and max included
 
 class Game {
   constructor() {
-    this.health = 100;
     this.height = 20;
     this.width = 32;
     this.field = [];
-    this.playerX;
-    this.playerY;
+    this.player = { x: undefined, y: undefined, health: 100, damage: 20, status: 'alive' }
+    this.enemies = [];
+    this.enemyDamage = 15;
   }
 
   #generateField() {
@@ -75,11 +75,12 @@ class Game {
       } else if (heroCnt < 1) {
         curType = 'P';
         heroCnt++;
-        this.playerX = x;
-        this.playerY = y;
+        this.player.x = x;
+        this.player.y = y;
       } else if (enemiesCnt < 10) {
-        curType = 'E';
+        curType = 'E' + enemiesCnt;
         enemiesCnt++;
+        this.enemies.push({ x, y, health: 100, status: 'alive' });
       }
       this.field[y][x] = curType;
     }
@@ -90,8 +91,13 @@ class Game {
       for (var j = 0; j < this.width; j++) {
         var tile = document.createElement('div');
         tile.classList.add('tile');
-        tile.classList.add('tile' + this.field[i][j]);
-        if (this.field[i][j] === 'P' || this.field[i][j] === 'E') {
+        if (this.field[i][j][0] === 'E') {
+          tile.classList.add('tile' + this.field[i][j][0]);
+          tile.classList.add(this.field[i][j][1]);
+        } else {
+          tile.classList.add('tile' + this.field[i][j]);
+        }
+        if (this.field[i][j] === 'P' || this.field[i][j][0] === 'E') {
           var healthbar = document.createElement('div');
           healthbar.classList.add('health');
           healthbar.style.width = '100%';
@@ -102,12 +108,61 @@ class Game {
     }
   }
 
+  #adjustCoordinate(coordinate, axis) {
+    var limit = axis === 'x' ? this.width : this.height;
+    var newCoordinate = coordinate;
+    if (coordinate === limit) {
+      newCoordinate = 0;
+    }
+    if (coordinate === -1) {
+      newCoordinate = limit - 1;
+    }
+    return newCoordinate;
+  }
+
+  #updateEnemyHP(index) {
+    var enemyTile = $(".tileE." + index);
+    enemyTile.children('.health').css('width', this.enemies[index].health + '%');
+    if (this.enemies[index].health <= 0) {
+      enemyTile.removeClass();
+      enemyTile.empty();
+      enemyTile.addClass('tile');
+    }
+  }
+
   #initPlayerMovements() {
     var self = this;
+    function handleAttack() {
+      for (var i = -1; i <= 1; i++) {
+        for (var j = -1; j <= 1; j++) {
+          if (i === 0 && j === 0) {
+            continue;
+          }
+          var attackX = self.#adjustCoordinate(self.player.x + j, 'x');
+          var attackY = self.#adjustCoordinate(self.player.y + i, 'y');
+          var tileToAttack = self.field[attackY][attackX];
+          if (tileToAttack[0] === 'E') {
+            var ind = tileToAttack[1];
+            var enemy = self.enemies[ind];
+            enemy.health -= self.player.damage;
+            if (enemy.health <= 0) {
+              enemy.status = 'dead';
+              self.field[attackY][attackX] = '';
+            }
+            self.#updateEnemyHP(ind);
+          }
+        }
+      }
+    }
+
     function handleKeypress(event) {
       var key = event.key.toLowerCase();
-      if ("wasd".indexOf(key) == -1) {
+      if ("wasd ".indexOf(key) == -1) {
         return;
+      }
+
+      if (key === ' ') {
+        handleAttack();
       }
 
       // registering where the player has moved
@@ -124,34 +179,21 @@ class Game {
       }
 
       // setting new coordinates
-      var newX = self.playerX + diffX;
-      var newY = self.playerY + diffY;
-      if (self.playerX + diffX === self.width) {
-        newX = 0;
-      }
-      if (self.playerX + diffX === -1) {
-        newX = self.width - 1;
-      }
-      if (self.playerY + diffY === self.height) {
-        newY = 0;
-      }
-      if (self.playerY + diffY === -1) {
-        newY = self.height - 1;
-      }
+      var newX = self.#adjustCoordinate(self.player.x + diffX, 'x');
+      var newY = self.#adjustCoordinate(self.player.y + diffY, 'y');
 
       // handling the movement itself
       var newTileType = self.field[newY][newX];
-      console.log(newTileType);
-      if (newTileType === 'W' || newTileType === 'E') {
+      if (newTileType === 'W' || newTileType[0] === 'E') {
         return;
       }
-      var previousTile = $(".tile").eq(self.playerY * self.width + self.playerX);
+      var previousTile = $(".tile").eq(self.player.y * self.width + self.player.x);
       previousTile.removeClass();
       previousTile.empty();
       previousTile.addClass('tile');
 
-      self.playerX = newX;
-      self.playerY = newY;
+      self.player.x = newX;
+      self.player.y = newY;
       var newTile = $(".tile").eq(newY * self.width + newX);
       newTile.removeClass();
       newTile.addClass('tile');

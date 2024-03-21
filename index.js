@@ -10,7 +10,7 @@ class Game {
     this.player = { x: undefined, y: undefined, health: 100, damage: 20, status: 'alive' }
     this.enemies = [];
     this.enemyDamage = 15;
-    this.lastEnemyMovements = undefined;
+    this.enemiesSkipNextTurn = undefined;
   }
 
   init() {
@@ -230,6 +230,9 @@ class Game {
       healthbar.classList.add('health');
       healthbar.style.width = self.player.health + '%';
       newTile.append(healthbar);
+
+      self.#handleEnemyMovements();
+      self.enemiesSkipNextTurn = true;
     }
 
     window.addEventListener("keypress", handleKeypress);
@@ -282,7 +285,11 @@ class Game {
   #initEnemyMovements() {
     var self = this;
     setInterval(function() {
-      self.#handleEnemyMovements();
-    }, 1 * 1000)
+      if (!self.enemiesSkipNextTurn) {
+        self.#handleEnemyMovements();
+      } else {
+        self.enemiesSkipNextTurn = false;
+      }
+    }, 1 * 800)
   }
 }

@@ -127,6 +127,8 @@ class Game {
       enemyTile.removeClass();
       enemyTile.empty();
       enemyTile.addClass('tile');
+    } else {
+      this.player.health -= this.enemyDamage;
     }
   }
 
@@ -206,7 +208,7 @@ class Game {
 
       var healthbar = document.createElement('div');
       healthbar.classList.add('health');
-      healthbar.style.width = '100%';
+      healthbar.style.width = self.player.health + '%';
       newTile.append(healthbar);
     }
 

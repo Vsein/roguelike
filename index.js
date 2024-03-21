@@ -133,9 +133,9 @@ class Game {
     console.log(enemyTile);
     enemyTile.children('.health').css('width', this.enemies[index].health + '%');
     if (this.enemies[index].health <= 0) {
-      enemyTile.removeClass();
+      enemyTile.removeClass('tileE');
+      enemyTile.removeClass(index.toString());
       enemyTile.empty();
-      enemyTile.addClass('tile');
     } else {
       this.player.health -= this.enemyDamage;
       if (this.player.health <= 0) {
@@ -214,9 +214,8 @@ class Game {
       self.field[newY][newX] = 'P';
 
       var previousTile = $(".tile").eq(self.player.y * self.width + self.player.x);
-      previousTile.removeClass();
+      previousTile.removeClass('tileP');
       previousTile.empty();
-      previousTile.addClass('tile');
       self.field[self.player.y][self.player.x] = '';
 
       // setting new coordinates
@@ -254,20 +253,23 @@ class Game {
         }
 
         var previousTile = $(".tile").eq(this.enemies[i].y * this.width + this.enemies[i].x);
-        previousTile.removeClass();
+        previousTile.removeClass('tileE');
+        previousTile.removeClass(i.toString());
         previousTile.empty();
-        previousTile.addClass('tile');
-        this.field[this.enemies[i].y][this.enemies[i].x] = '';
+        var everything = this.field[this.enemies[i].y][this.enemies[i].x].split(' ');
+        if (everything.length > 1) {
+          this.field[this.enemies[i].y][this.enemies[i].x] = everything[1];
+        } else {
+          this.field[this.enemies[i].y][this.enemies[i].x] = '';
+        }
 
         // setting new coordinates
         this.enemies[i].x = newX;
         this.enemies[i].y = newY;
         var newTile = $(".tile").eq(newY * this.width + newX);
-        newTile.removeClass();
-        newTile.addClass('tile');
         newTile.addClass('tileE');
         newTile.addClass(i.toString());
-        this.field[newY][newX] = 'E' + i;
+        this.field[newY][newX] = 'E' + i + ' ' + this.field[newY][newX];
 
         var healthbar = document.createElement('div');
         healthbar.classList.add('health');

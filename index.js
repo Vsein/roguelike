@@ -272,36 +272,44 @@ class Game {
         this.#handleAttack(this.enemies[i].x, this.enemies[i].y, 'enemy');
       }
 
-      if (this.enemies[i].movementType <= 1) {
-        // registering the enemy movement in a random direction
-        var direction = randomIntFromInterval(0, 4);
-        var correspondingKey = "wasd"[direction];
-        var diff = this.#getAxisOffsetsForMovement(correspondingKey);
-        var newX = this.#adjustCoordinate(this.enemies[i].x + diff.x, 'x');
-        var newY = this.#adjustCoordinate(this.enemies[i].y + diff.y, 'y');
-
-        // handling the movement itself
-        var newTileType = this.field[newY][newX];
-        if (newTileType === 'W' || newTileType[0] === 'E' || newTileType === 'P') {
-          continue;
-        }
-
-        var previousTile = $(".tile").eq(this.enemies[i].y * this.width + this.enemies[i].x);
-        previousTile.removeClass('tileE');
-        previousTile.removeClass(i.toString());
-        previousTile.empty();
-        this.#handleItemsBeneathEnemy(this.enemies[i].x, this.enemies[i].y);
-
-        // setting new coordinates
-        this.enemies[i].x = newX;
-        this.enemies[i].y = newY;
-        var newTile = $(".tile").eq(newY * this.width + newX);
-        newTile.addClass('tileE');
-        newTile.addClass(i.toString());
-        this.field[newY][newX] = 'E' + i + ' ' + this.field[newY][newX];
-
-        this.#addHealthbarToTile(newTile, this.enemies[i].health);
+      // registering the enemy movement
+      var direction = randomIntFromInterval(0, 4);
+      var correspondingKey;
+      if (this.enemies[i].movementType == 0) { // random movement
+        correspondingKey = "wasd"[direction];
+      } else if (this.enemies[i].movementType == 1) { // axis movement
+        correspondingKey = this.enemies[i].direction || "wasd"[direction];
+        this.enemies[i].direction = correspondingKey;
       }
+
+      var diff = this.#getAxisOffsetsForMovement(correspondingKey);
+      var newX = this.#adjustCoordinate(this.enemies[i].x + diff.x, 'x');
+      var newY = this.#adjustCoordinate(this.enemies[i].y + diff.y, 'y');
+
+      // handling the movement itself
+      var newTileType = this.field[newY][newX];
+      if (newTileType === 'W' || newTileType[0] === 'E' || newTileType === 'P') {
+        if (this.enemies[i].movementType == 1) {
+          this.enemies[i].direction = undefined;
+        }
+        continue;
+      }
+
+      var previousTile = $(".tile").eq(this.enemies[i].y * this.width + this.enemies[i].x);
+      previousTile.removeClass('tileE');
+      previousTile.removeClass(i.toString());
+      previousTile.empty();
+      this.#handleItemsBeneathEnemy(this.enemies[i].x, this.enemies[i].y);
+
+      // setting new coordinates
+      this.enemies[i].x = newX;
+      this.enemies[i].y = newY;
+      var newTile = $(".tile").eq(newY * this.width + newX);
+      newTile.addClass('tileE');
+      newTile.addClass(i.toString());
+      this.field[newY][newX] = 'E' + i + ' ' + this.field[newY][newX];
+
+      this.#addHealthbarToTile(newTile, this.enemies[i].health);
     }
   }
 

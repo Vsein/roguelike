@@ -10,6 +10,13 @@ class Game {
     this.player = { x: undefined, y: undefined, health: 100, damage: 20, status: 'alive' }
     this.enemies = [];
     this.enemyDamage = 15;
+    this.lastEnemyMovements = undefined;
+  }
+
+  init() {
+    this.#generateField();
+    this.#initPlayerMovements();
+    this.#initEnemyMovements();
   }
 
   #generateField() {
@@ -80,7 +87,8 @@ class Game {
       } else if (enemiesCnt < 10) {
         curType = 'E' + enemiesCnt;
         enemiesCnt++;
-        this.enemies.push({ x, y, health: 100, status: 'alive' });
+        var movementType = randomIntFromInterval(0, 1);
+        this.enemies.push({ x, y, health: 100, status: 'alive', movementType });
       }
       this.field[y][x] = curType;
     }
@@ -122,6 +130,7 @@ class Game {
 
   #updateEnemyHP(index) {
     var enemyTile = $(".tileE." + index);
+    console.log(enemyTile);
     enemyTile.children('.health').css('width', this.enemies[index].health + '%');
     if (this.enemies[index].health <= 0) {
       enemyTile.removeClass();
@@ -133,6 +142,21 @@ class Game {
         this.player.status = 'dead';
       }
     }
+  }
+
+  #getAxisOffsetsForMovement(key) {
+    var diffX = 0;
+    var diffY = 0;
+    if (key === 'w') {
+      diffY = -1;
+    } else if (key === 'a') {
+      diffX = -1;
+    } else if (key === 's') {
+      diffY = 1;
+    } else if (key === 'd') {
+      diffX = 1;
+    }
+    return { x: diffX, y: diffY };
   }
 
   #initPlayerMovements() {
@@ -148,12 +172,13 @@ class Game {
           var tileToAttack = self.field[attackY][attackX];
           if (tileToAttack[0] === 'E') {
             var ind = tileToAttack[1];
-            var enemy = self.enemies[ind];
-            enemy.health -= self.player.damage;
-            if (enemy.health <= 0) {
-              enemy.status = 'dead';
+            console.log(self.enemies[ind]);
+            self.enemies[ind].health -= self.player.damage;
+            if (self.enemies[ind].health <= 0) {
+              self.enemies[ind].status = 'dead';
               self.field[attackY][attackX] = '';
             }
+            console.log(ind);
             self.#updateEnemyHP(ind);
           }
         }
@@ -162,11 +187,7 @@ class Game {
 
     function handleKeypress(event) {
       var key = event.key.toLowerCase();
-      if (self.player.status === 'dead') {
-        return;
-      }
-
-      if ("wasd ".indexOf(key) == -1) {
+      if (self.player.status === 'dead' || "wasd ".indexOf(key) == -1) {
         return;
       }
 
@@ -175,21 +196,9 @@ class Game {
       }
 
       // registering where the player has moved
-      var diffX = 0;
-      var diffY = 0;
-      if (key === 'w') {
-        diffY = -1;
-      } else if (key === 'a') {
-        diffX = -1;
-      } else if (key === 's') {
-        diffY = 1;
-      } else if (key === 'd') {
-        diffX = 1;
-      }
-
-      // setting new coordinates
-      var newX = self.#adjustCoordinate(self.player.x + diffX, 'x');
-      var newY = self.#adjustCoordinate(self.player.y + diffY, 'y');
+      var diff = self.#getAxisOffsetsForMovement(key);
+      var newX = self.#adjustCoordinate(self.player.x + diff.x, 'x');
+      var newY = self.#adjustCoordinate(self.player.y + diff.y, 'y');
 
       // handling the movement itself
       var newTileType = self.field[newY][newX];
@@ -202,13 +211,15 @@ class Game {
       if (newTileType === 'HP') {
         self.player.health = Math.min(100, self.player.health + 50);
       }
-      self.field[newY][newX] = '';
+      self.field[newY][newX] = 'P';
 
       var previousTile = $(".tile").eq(self.player.y * self.width + self.player.x);
       previousTile.removeClass();
       previousTile.empty();
       previousTile.addClass('tile');
+      self.field[self.player.y][self.player.x] = '';
 
+      // setting new coordinates
       self.player.x = newX;
       self.player.y = newY;
       var newTile = $(".tile").eq(newY * self.width + newX);
@@ -225,8 +236,51 @@ class Game {
     window.addEventListener("keypress", handleKeypress);
   }
 
-  init() {
-    this.#generateField();
-    this.#initPlayerMovements();
+  #handleEnemyMovements() {
+    for (var i = 0; i < this.enemies.length; i++) {
+      if (this.enemies[i].status === 'dead') continue;
+      if (this.enemies[i].movementType <= 1) {
+        // registering the enemy movement in a random direction
+        var direction = randomIntFromInterval(0, 4);
+        var correspondingKey = "wasd"[direction];
+        var diff = this.#getAxisOffsetsForMovement(correspondingKey);
+        var newX = this.#adjustCoordinate(this.enemies[i].x + diff.x, 'x');
+        var newY = this.#adjustCoordinate(this.enemies[i].y + diff.y, 'y');
+
+        // handling the movement itself
+        var newTileType = this.field[newY][newX];
+        if (newTileType === 'W' || newTileType[0] === 'E' || newTileType === 'P') {
+          continue;
+        }
+
+        var previousTile = $(".tile").eq(this.enemies[i].y * this.width + this.enemies[i].x);
+        previousTile.removeClass();
+        previousTile.empty();
+        previousTile.addClass('tile');
+        this.field[this.enemies[i].y][this.enemies[i].x] = '';
+
+        // setting new coordinates
+        this.enemies[i].x = newX;
+        this.enemies[i].y = newY;
+        var newTile = $(".tile").eq(newY * this.width + newX);
+        newTile.removeClass();
+        newTile.addClass('tile');
+        newTile.addClass('tileE');
+        newTile.addClass(i.toString());
+        this.field[newY][newX] = 'E' + i;
+
+        var healthbar = document.createElement('div');
+        healthbar.classList.add('health');
+        healthbar.style.width = this.enemies[i].health + '%';
+        newTile.append(healthbar);
+      }
+    }
+  }
+
+  #initEnemyMovements() {
+    var self = this;
+    setInterval(function() {
+      self.#handleEnemyMovements();
+    }, 1 * 1000)
   }
 }

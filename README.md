@@ -4,7 +4,7 @@ WASD - movement
 
 Space - attack
 
-The potions heals half of the HP.
+The potions heal half of the HP.
 
 The sword gives a slight boost to the hero damage.
 

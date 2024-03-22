@@ -7,7 +7,7 @@ class Game {
     this.height = 20;
     this.width = 32;
     this.field = [];
-    this.player = { x: undefined, y: undefined, health: 100, damage: 20, status: 'alive' }
+    this.player = { x: undefined, y: undefined, health: 100, damage: 20, status: 'alive', hitChance: 0.3 }
     this.playerEvaded = false;
     this.enemies = [];
     this.enemyDamage = 15;
@@ -100,7 +100,7 @@ class Game {
         curType = 'E' + enemiesCnt;
         enemiesCnt++;
         var movementType = randomIntFromInterval(0, 1);
-        this.enemies.push({ x, y, health: 100, status: 'alive', movementType });
+        this.enemies.push({ x, y, health: 100, status: 'alive', movementType, justFought: false });
       }
       this.field[y][x] = curType;
     }
@@ -139,6 +139,7 @@ class Game {
   }
 
   #updatePlayerHP() {
+    this.player.health -= this.enemyDamage;
     if (this.player.health <= 0) {
       this.player.status = 'dead';
     }
@@ -148,6 +149,7 @@ class Game {
 
   #updateEnemyHP(index) {
     this.enemies[index].health -= this.player.damage;
+    this.enemies[index].justFought = true;
     var enemyTile = $(".tileE." + index);
     enemyTile.children('.health').css('width', this.enemies[index].health + '%');
 
@@ -178,6 +180,7 @@ class Game {
   }
 
   #handleAttack(x, y, initiator) {
+    var attacked = false;
     for (var i = -1; i <= 1; i++) {
       for (var j = -1; j <= 1; j++) {
         if (i === 0 && j === 0) {
@@ -189,13 +192,15 @@ class Game {
         if (initiator === 'player' && tileToAttack[0] === 'E') {
           var ind = tileToAttack[1];
           this.#updateEnemyHP(ind);
+          attacked = true;
         }
         if (initiator === 'enemy' && tileToAttack === 'P') {
-          this.player.health -= this.enemyDamage;
           this.#updatePlayerHP();
+          attacked = true;
         }
       }
     }
+    return attacked;
   }
 
   #initPlayerMovements() {
@@ -212,7 +217,9 @@ class Game {
       if (key === ' ') {
         self.#handleAttack(self.player.x, self.player.y, 'player');
       } else {
-        self.playerEvaded = Math.random() > 0.3 ? true : false;
+        // hitChance corresponds to the probability of hero getting damage when engaging an enemy
+        // or to the probability of being hit when running away from an enemy
+        self.playerEvaded = Math.random() > self.player.hitChance ? true : false;
       }
 
       // registering where the player has moved
@@ -227,6 +234,7 @@ class Game {
       }
       if (newTileType === 'SW') {
         self.player.damage *= 1.3;
+        self.player.hitChance /= 1.3;
       }
       if (newTileType === 'HP') {
         self.player.health = Math.min(100, self.player.health + 50);
@@ -268,10 +276,13 @@ class Game {
     for (var i = 0; i < this.enemies.length; i++) {
       if (this.enemies[i].status === 'dead') continue;
 
-      if (!this.playerEvaded) {
-        this.#handleAttack(this.enemies[i].x, this.enemies[i].y, 'enemy');
+      if (!this.playerEvaded && !this.enemies[i].justFought) {
+        if (this.#handleAttack(this.enemies[i].x, this.enemies[i].y, 'enemy')) {
+          continue;
+        }
       } else {
         this.playerEvaded = false;
+        this.enemies[i].justFought = false;
       }
 
       // registering the enemy movement
